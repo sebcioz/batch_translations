@@ -10,6 +10,8 @@ module ActionView
         @template.concat @template.hidden_field_tag("#{object_name}[locale]", locale)
         if @template.respond_to? :simple_fields_for
           @template.simple_fields_for(object_name, object, *args, &proc)
+        elsif @template.respond_to? :semantic_fields_for
+          @template.semantic_fields_for(object_name, object, *args, &proc)
         else
           @template.fields_for(object_name, object, *args, &proc)
         end
