@@ -3,17 +3,24 @@ module ActionView
     class FormBuilder
       def globalize_fields_for(locale, *args, &proc)
         raise ArgumentError, "Missing block" unless block_given?
-        @index = @index ? @index + 1 : 1
+        @locale_index ||= {}
+
+        if @locale_index[locale].nil?
+          @index = @index ? @index + 1 : 1
+          @locale_index[locale] = @index
+        else
+          @index = @locale_index[locale]
+        end
+
         object_name = "#{@object_name}[translations_attributes][#{@index}]"
-        object = @object.translations.find_by_locale locale.to_s
-        @template.concat @template.hidden_field_tag("#{object_name}[id]", object ? object.id : "")
+        object = @object.translations.select{|t| t.locale.to_s == locale.to_s}.first || @object.translations.find_by_locale(locale.to_s)
         @template.concat @template.hidden_field_tag("#{object_name}[locale]", locale)
         if @template.respond_to? :simple_fields_for
-          @template.simple_fields_for(object_name, object, *args, &proc)
+          @template.concat @template.simple_fields_for(object_name, object, *args, &proc)
         elsif @template.respond_to? :semantic_fields_for
-          @template.semantic_fields_for(object_name, object, *args, &proc)
+          @template.concat @template.semantic_fields_for(object_name, object, *args, &proc)
         else
-          @template.fields_for(object_name, object, *args, &proc)
+          @template.concat @template.fields_for(object_name, object, *args, &proc)
         end
       end
     end
@@ -23,15 +30,13 @@ end
 module Globalize
   module ActiveRecord
     module InstanceMethods
-      def update_attributes_with_translations(options)
-        options.each do |key, value|
+      def update_attributes_with_translations(attributes)
+        attributes.each do |key, value|
           if key == "translations_attributes"
-            translated_attrs = {}
-            value.each do |rec_id, rec_value|
-              rec_value.delete("id")
-              translated_attrs[rec_value.delete("locale")] = rec_value
+            value.each do |rec_index, rec_value|
+              locale = rec_value.delete("locale")
+              write_attribute(rec_value.keys.first, rec_value.values.first, options = { :locale => locale })
             end
-            self.set_translations(translated_attrs)
           else
             self.update_attribute(key, value)
           end
