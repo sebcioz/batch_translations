@@ -30,14 +30,13 @@ end
 module Globalize
   module ActiveRecord
     module InstanceMethods
-      def update_attributes_with_translations(options)
+      def update_attributes(options)
         options.each do |key, value|
           if key == "translations_attributes"
-            translated_attrs = {}
-            value.each do |rec_id, rec_value|
-              translated_attrs[rec_value.delete("locale")] = rec_value
+            value.each do |rec_index, rec_value|
+              locale = rec_value.delete("locale")
+              write_attribute(rec_value.keys.first, rec_value.values.first, options = { :locale => locale })
             end
-            self.set_translations(translated_attrs)
           else
             self.update_attribute(key, value)
           end
