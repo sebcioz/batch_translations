@@ -14,7 +14,6 @@ module ActionView
 
         object_name = "#{@object_name}[translations_attributes][#{@index}]"
         object = @object.translations.select{|t| t.locale.to_s == locale.to_s}.first || @object.translations.find_by_locale(locale.to_s)
-        @template.concat @template.hidden_field_tag("#{object_name}[id]", object ? object.id : "")
         @template.concat @template.hidden_field_tag("#{object_name}[locale]", locale)
         if @template.respond_to? :simple_fields_for
           @template.simple_fields_for(object_name, object, *args, &proc)
@@ -36,7 +35,6 @@ module Globalize
           if key == "translations_attributes"
             translated_attrs = {}
             value.each do |rec_id, rec_value|
-              rec_value.delete("id")
               translated_attrs[rec_value.delete("locale")] = rec_value
             end
             self.set_translations(translated_attrs)
