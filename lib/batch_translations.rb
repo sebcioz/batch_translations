@@ -14,13 +14,14 @@ module ActionView
 
         object_name = "#{@object_name}[translations_attributes][#{@index}]"
         object = @object.translations.select{|t| t.locale.to_s == locale.to_s}.first || @object.translations.find_by_locale(locale.to_s)
+        @template.concat @template.hidden_field_tag("#{object_name}[id]", object ? object.id : "")
         @template.concat @template.hidden_field_tag("#{object_name}[locale]", locale)
         if @template.respond_to? :simple_fields_for
-          @template.concat @template.simple_fields_for(object_name, object, *args, &proc)
+          @template.simple_fields_for(object_name, object, *args, &proc)
         elsif @template.respond_to? :semantic_fields_for
-          @template.concat @template.semantic_fields_for(object_name, object, *args, &proc)
+          @template.semantic_fields_for(object_name, object, *args, &proc)
         else
-          @template.concat @template.fields_for(object_name, object, *args, &proc)
+          @template.fields_for(object_name, object, *args, &proc)
         end
       end
     end
@@ -57,7 +58,7 @@ module Globalize
           def after_save
             init_translations
           end
-          # Builds an empty translation for each available 
+          # Builds an empty translation for each available
           # locale not in use after creation
           def init_translations
             I18n.translated_locales.reject{|key| key == :root }.each do |locale|
